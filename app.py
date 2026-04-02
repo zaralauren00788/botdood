@@ -4,7 +4,6 @@ from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Ambil token dari Environment Variable
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 if not BOT_TOKEN:
@@ -25,8 +24,10 @@ def run_bot():
     application.run_polling()
 
 if __name__ == "__main__":
+    # Jalankan bot di thread terpisah
     bot_thread = threading.Thread(target=run_bot)
     bot_thread.start()
 
+    # Jalankan Flask di port Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
