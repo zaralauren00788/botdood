@@ -1,5 +1,6 @@
 import os
 import threading
+import asyncio
 from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -18,16 +19,17 @@ def home():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot aktif dan berjalan!")
 
-def run_bot():
+async def run_bot():
     application = ApplicationBuilder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
-    application.run_polling()
+    await application.run_polling()
+
+def start_bot():
+    asyncio.run(run_bot())
 
 if __name__ == "__main__":
-    # Jalankan bot di thread terpisah
-    bot_thread = threading.Thread(target=run_bot)
+    bot_thread = threading.Thread(target=start_bot)
     bot_thread.start()
 
-    # Jalankan Flask di port Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
