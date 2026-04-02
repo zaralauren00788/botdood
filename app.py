@@ -3,10 +3,10 @@ import requests
 import asyncio
 from flask import Flask, request
 from telegram import Update, Bot
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-DOOD_API_KEY = os.environ.get("DOOD_API_KEY")
+BOT_TOKEN = os.environ.get("8713012544:AAFMjZQRr-Mu3OtnvQ0q3nzjKdpzANwLgEo")
+DOOD_API_KEY = os.environ.get("465956zi4yx3fx1ugw6otj")
 
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
@@ -32,12 +32,11 @@ def check_status(file_code):
 # =============================
 async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = update.message.text
-
     msg = await update.message.reply_text("Uploading...")
 
     res = remote_upload(link)
 
-    if res["status"] != 200:
+    if res.get("status") != 200:
         await msg.edit_text("Upload gagal.")
         return
 
@@ -55,7 +54,7 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
 
 # =============================
-# WEBHOOK ROUTE
+# WEBHOOK
 # =============================
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
@@ -66,17 +65,6 @@ def webhook():
 @app.route("/")
 def home():
     return "Bot is running!"
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
-    import os
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Bot is running"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
