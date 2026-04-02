@@ -2,19 +2,16 @@ import os
 import requests
 import asyncio
 from flask import Flask, request
-from telegram import Update, Bot
+from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 BOT_TOKEN = os.environ.get("8713012544:AAFMjZQRr-Mu3OtnvQ0q3nzjKdpzANwLgEo")
 DOOD_API_KEY = os.environ.get("465956zi4yx3fx1ugw6otj")
 
 app = Flask(__name__)
-bot = Bot(token=BOT_TOKEN)
 application = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# =============================
-# DOOD FUNCTIONS
-# =============================
+# ================= DOOD =================
 def remote_upload(url):
     return requests.get(
         "https://doodapi.com/api/upload/url",
@@ -27,9 +24,7 @@ def check_status(file_code):
         params={"key": DOOD_API_KEY, "file_code": file_code}
     ).json()
 
-# =============================
-# TELEGRAM HANDLER
-# =============================
+# ================= TELEGRAM =================
 async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = update.message.text
     msg = await update.message.reply_text("Uploading...")
@@ -53,13 +48,11 @@ async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
 
-# =============================
-# WEBHOOK
-# =============================
+# ================= WEBHOOK =================
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    asyncio.run(application.process_update(update))
+async def webhook():
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    await application.process_update(update)
     return "ok"
 
 @app.route("/")
@@ -67,4 +60,5 @@ def home():
     return "Bot is running!"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
