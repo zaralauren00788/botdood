@@ -1,64 +1,31 @@
 import os
-import requests
-import asyncio
-from flask import Flask, request
+from flask import Flask
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-BOT_TOKEN = os.environ.get("8713012544:AAFMjZQRr-Mu3OtnvQ0q3nzjKdpzANwLgEo")
-DOOD_API_KEY = os.environ.get("465956zi4yx3fx1ugw6otj")
+BOT_TOKEN = os.getenv("8713012544:AAFMjZQRr-Mu3OtnvQ0q3nzjKdpzANwLgEo")
 
 app = Flask(__name__)
-application = ApplicationBuilder().token(BOT_TOKEN).build()
-
-# ================= DOOD =================
-def remote_upload(url):
-    return requests.get(
-        "https://doodapi.com/api/upload/url",
-        params={"key": DOOD_API_KEY, "url": url}
-    ).json()
-
-def check_status(file_code):
-    return requests.get(
-        "https://doodapi.com/api/file/check",
-        params={"key": DOOD_API_KEY, "file_code": file_code}
-    ).json()
-
-# ================= TELEGRAM =================
-async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    link = update.message.text
-    msg = await update.message.reply_text("Uploading...")
-
-    res = remote_upload(link)
-
-    if res.get("status") != 200:
-        await msg.edit_text("Upload gagal.")
-        return
-
-    file_code = res["result"]["filecode"]
-
-    while True:
-        await asyncio.sleep(10)
-        status = check_status(file_code)
-        if status.get("result") and status["result"][0]["status"] != "working":
-            break
-
-    dood_link = f"https://doodstream.com/d/{file_code}"
-    await msg.edit_text(f"Selesai!\n{dood_link}")
-
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
-
-# ================= WEBHOOK =================
-@app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    await application.process_update(update)
-    return "ok"
 
 @app.route("/")
 def home():
     return "Bot is running!"
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Bot aktif!")
+
+def run_bot():
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.run_polling()
+
 if __name__ == "__main__":
+    import threading
+
+    # Jalankan bot di thread terpisah
+    t = threading.Thread(target=run_bot)
+    t.start()
+
+    # Jalankan web server untuk Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
